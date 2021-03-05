@@ -27,7 +27,7 @@ fn menu() -> u8 {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    while {
+    'cli: while {
         let option: u8 = menu();
 
         match option {
@@ -40,7 +40,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .input_from_bytes(resp.as_bytes())
                     .print()
                     .unwrap();
-                x
+                x;
+                break 'cli;
             }
             _ => {
                 println!("lala");
