@@ -34,13 +34,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             1 => {
                 let resp =
         reqwest::blocking::get("https://raw.githubusercontent.com/lpxxn/rust-design-pattern/master/creational/singleton.rs")?.text()?;
-                let x = PrettyPrinter::new()
+                PrettyPrinter::new()
                     .language("rust")
                     .line_numbers(true)
                     .input_from_bytes(resp.as_bytes())
                     .print()
                     .unwrap();
-                x;
                 break 'cli;
             }
             _ => {
