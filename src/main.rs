@@ -1,5 +1,8 @@
 use bat::PrettyPrinter;
+use create_url::CreateUrl;
 use std::io;
+
+mod create_url;
 
 fn menu() -> u8 {
     println!("\nMENU");
