@@ -1,6 +1,7 @@
 static INITIAL_URL: &str = "https://raw.githubusercontent.com/lpxxn/rust-design-pattern/master/";
+#[derive(Debug)]
 pub struct UrlBuilder {
-    url: String,
+    pub url: String,
 }
 
 impl UrlBuilder {
