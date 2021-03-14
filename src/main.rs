@@ -1,56 +1,53 @@
-use bat::PrettyPrinter;
-use std::io;
-use url::UrlBuilder;
+use select::document::Document;
+use select::predicate::Name;
+use std::env;
 
-mod url;
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let website_address = &args[1];
+    let document = fetch_links_from_website(website_address).unwrap();
+    let links = get_links_from_document(&document);
+    get_status_code_from_links(links, website_address);
+}
 
-fn menu() -> u8 {
-    println!("\nMENU");
-    println!("----------------------------------------\n");
-    println!("Please, select an option:");
-    println!("\t 1. Creational patterns");
-    println!("\t 2. Behavioral patterns");
-    println!("\t 3. Structural patterns");
-    println!("\t 0. Exit");
-    let mut option: String = String::new();
+fn fetch_links_from_website(address: &String) -> Result<Document, Box<dyn std::error::Error>> {
+    let resp = reqwest::blocking::get(address)?.text()?;
+    let document = Document::from(resp.as_str());
+    // Add match arm
+    Ok(document)
+}
 
-    io::stdin()
-        .read_line(&mut option)
-        .expect("Failed to read line");
+fn get_links_from_document<'a>(document: &'a Document) -> Vec<&'a str> {
+    let mut links: Vec<&str> = vec![];
+    for node in document.find(Name("a")) {
+        links.push(node.attr("href").unwrap())
+    }
+    links
+}
 
-    let option = option.trim().parse::<u8>();
-
-    match option {
-        Ok(o) => return o,
-        Err(_) => {
-            eprintln!("ERROR: Please, type a number");
-            99
-        }
+fn validate_link(link: String, website_address: &String) -> String {
+    if link.contains("https") {
+        link
+    } else {
+        let relative_link = format!("{}{}", website_address.to_owned(), link.clone());
+        relative_link
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    'cli: while {
-        let option: u8 = menu();
-
-        match option {
-            1 => {
-                let resp =
-        reqwest::blocking::get("https://raw.githubusercontent.com/lpxxn/rust-design-pattern/master/creational/singleton.rs")?.text()?;
-                PrettyPrinter::new()
-                    .language("rust")
-                    .line_numbers(true)
-                    .input_from_bytes(resp.as_bytes())
-                    .print()
-                    .unwrap();
-                break 'cli;
-            }
-            _ => {
-                println!("lala");
-                true
-            }
+fn get_status_code_from_links(
+    links: Vec<&str>,
+    base_link: &String,
+) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    for link in links {
+        println!("{}", &validate_link(link.to_string(), base_link));
+        let resp = reqwest::blocking::get(&validate_link(link.to_string(), base_link))?;
+        if resp.status().is_success() {
+            println!("success!");
+        } else if resp.status().is_server_error() {
+            println!("server error!");
+        } else {
+            println!("Something else happened. Status: {:?}", resp.status());
         }
-    } {}
-
+    }
     Ok(())
 }
