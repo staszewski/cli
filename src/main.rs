@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
     let website_address = &args[1];
     let url_website_address = Url::parse(website_address)?;
+    println!("base: {}", url_website_address);
     let base = base_url(url_website_address).unwrap();
     let document = fetch_links_from_website(website_address).unwrap();
     let links = get_links_from_document(&document);
@@ -31,11 +32,26 @@ fn get_links_from_document<'a>(document: &'a Document) -> Vec<&'a str> {
 }
 
 fn validate_link(link: String, website_address: &String) -> String {
-    if link.contains("https") {
+    if link.trim() == "/" {
+        website_address.to_owned()
+    } else if link.contains("https") {
         link
     } else {
-        let relative_link = format!("{}{}", website_address.to_owned(), link.clone());
+        let relative_link = format!(
+            "{}{}",
+            website_address.to_owned(),
+            clean_relative_link(link.clone())
+        );
         relative_link
+    }
+}
+
+fn clean_relative_link(mut link: String) -> String {
+    if link.chars().next().unwrap() == "/".chars().next().unwrap() {
+        link.remove(0);
+        link
+    } else {
+        link
     }
 }
 
@@ -43,9 +59,12 @@ fn get_status_code_from_links(
     links: Vec<&str>,
     base_link: &String,
 ) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
-    println!("{:?}", links);
+    println!("links: {:?}", links);
     for link in links {
-        println!("{}", &validate_link(link.to_string(), base_link));
+        println!(
+            "Checking for: {}",
+            &validate_link(link.to_string(), base_link)
+        );
         let resp = reqwest::blocking::get(&validate_link(link.to_string(), base_link))?;
         if resp.status().is_success() {
             println!("success!");
