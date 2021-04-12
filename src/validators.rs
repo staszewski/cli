@@ -23,3 +23,16 @@ pub mod validate {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validates_relative_link() {
+        assert_eq!(
+            validate::clean_relative_link(String::from("/relative-link")),
+            String::from("relative-link")
+        )
+    }
+}
